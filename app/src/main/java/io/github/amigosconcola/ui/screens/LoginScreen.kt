@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -86,7 +87,8 @@ fun LoginScreen(
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
@@ -118,6 +120,7 @@ fun LoginScreen(
                     fontSize = 22.sp,
                     fontWeight = FontWeight.Bold
                 )
+                Spacer(modifier = Modifier.height(16.dp))
                 OutlinedTextField(
                     value = state.username,
                     onValueChange = { loginViewModel.onEvent(UsernameChanged(it)) },
@@ -152,12 +155,14 @@ fun LoginScreen(
                 }
                 Spacer(modifier = Modifier.height(24.dp))
                 Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    onClick = { loginViewModel.onEvent(Submit) }
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    onClick = { loginViewModel.onEvent(Submit) },
                 ) {
                     if (state.isLoading) {
                         CircularProgressIndicator(
-                            modifier = Modifier.width(24.dp),
+                            modifier = Modifier.size(16.dp),
                             color = MaterialTheme.colorScheme.onPrimary,
                         )
                     } else {

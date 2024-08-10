@@ -21,6 +21,12 @@ class AuthenticationInterceptor(
         const val TAG = "AuthenticationInterceptor"
     }
 
+    init {
+        runBlocking {
+            _tokens.loadTokens()
+        }
+    }
+
     override fun intercept(chain: Interceptor.Chain): Response = runBlocking {
         val tokens = _tokens.tokens().firstOrNull()
         var request = chain.request()
@@ -43,12 +49,13 @@ class AuthenticationInterceptor(
 
             Log.d(TAG, "Access token refreshed")
 
-            return@runBlocking response.request()
+            return@runBlocking response.request
                 .newBuilder()
-                .addHeader("Authorization", "")
+                .header("Authorization", "Bearer ${newTokens.accessToken}")
                 .build()
         } catch (ex: HttpException) {
             Log.d(TAG, "Failed to refresh token: ${ex.message()}")
+            _tokens.deleteTokens()
             return@runBlocking null
         }
     }

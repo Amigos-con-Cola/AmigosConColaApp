@@ -30,7 +30,7 @@ object AppModule {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.19:5130/")
+            .baseUrl(AmigosConColaApi.API_BASE)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
 
@@ -53,7 +53,7 @@ object AppModule {
             .build()
 
         val retrofit = Retrofit.Builder()
-            .baseUrl("http://192.168.1.19:5130/")
+            .baseUrl(AmigosConColaApi.API_BASE)
             .client(client)
             .addConverterFactory(MoshiConverterFactory.create(moshi))
             .build()
