@@ -1,5 +1,10 @@
 package io.github.amigosconcola.domain.model
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+
+@Parcelize
 data class Animal(
     val id: Int,
     val nombre: String,
@@ -12,4 +17,4 @@ data class Animal(
     val ubicacion: String,
     val peso: Int,
     val codigo: String?
-)
+) : Parcelable

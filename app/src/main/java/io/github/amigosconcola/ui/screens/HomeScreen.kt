@@ -1,13 +1,11 @@
 package io.github.amigosconcola.ui.screens
 
-import androidx.compose.foundation.Image
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,9 +13,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
@@ -28,6 +28,11 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
+import androidx.compose.material3.adaptive.ExperimentalMaterial3AdaptiveApi
+import androidx.compose.material3.adaptive.layout.AnimatedPane
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffold
+import androidx.compose.material3.adaptive.layout.ListDetailPaneScaffoldRole
+import androidx.compose.material3.adaptive.navigation.rememberListDetailPaneScaffoldNavigator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -36,23 +41,21 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
-import coil.request.ImageRequest
-import io.github.amigosconcola.R
 import io.github.amigosconcola.domain.model.Animal
+import io.github.amigosconcola.ui.composables.AnimalAvatar
+import io.github.amigosconcola.ui.composables.AnimalGender
 import io.github.amigosconcola.ui.composables.AppBar
 import io.github.amigosconcola.ui.viewmodel.HomeUiEvent
 import io.github.amigosconcola.ui.viewmodel.HomeViewModel
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3AdaptiveApi::class)
 @Composable
 fun HomeScreen(
     drawerState: DrawerState,
@@ -69,48 +72,192 @@ fun HomeScreen(
         }
     }
 
+    val navigator = rememberListDetailPaneScaffoldNavigator<Animal>()
+    val scrollState = rememberScrollState()
+
+    BackHandler(navigator.canNavigateBack()) {
+        navigator.navigateBack()
+    }
+
     Scaffold(
         modifier = modifier,
         topBar = { AppBar(onMenuClicked = onMenuClicked) },
     ) { innerPaddingValues ->
-        Column(
-            modifier = Modifier
-                .padding(innerPaddingValues)
-                .padding(
-                    horizontal = 24.dp,
-                    vertical = 16.dp
-                )
-        ) {
-            Text(
-                text = "Animalitos",
-                fontSize = 24.sp,
-            )
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = { homeViewModel.onEvent(HomeUiEvent.SearchTextChanged(it)) },
-                modifier = Modifier.fillMaxWidth(),
-                placeholder = { Text("Busca un animalito") },
-                shape = RoundedCornerShape(8.dp),
-                leadingIcon = {
-                    Icon(
-                        imageVector = Icons.Default.Search,
-                        contentDescription = "search"
+        ListDetailPaneScaffold(
+            directive = navigator.scaffoldDirective,
+            value = navigator.scaffoldValue,
+            listPane = {
+                AnimatedPane(
+                    modifier = Modifier.padding(innerPaddingValues)
+                ) {
+                    AnimalListPane(
+                        animals = state.animals,
+                        endReached = state.endReached,
+                        isLoadingItems = state.isLoadingItems,
+                        searchText = searchText,
+                        onSearchChanged = { homeViewModel.onEvent(HomeUiEvent.SearchTextChanged(it)) },
+                        onLoadNextItems = { homeViewModel.onEvent(HomeUiEvent.LoadNextPage) },
+                        onAnimalClicked = {
+                            navigator.navigateTo(
+                                ListDetailPaneScaffoldRole.Detail,
+                                it
+                            )
+                        }
                     )
                 }
-            )
-            Spacer(
-                modifier = Modifier.height(24.dp)
-            )
-            AnimalList(
-                state.animals,
-                state.endReached,
-                state.isLoadingItems,
-                { homeViewModel.onEvent(HomeUiEvent.LoadNextPage) },
+            },
+            detailPane = {
+                AnimatedPane(
+                    modifier = Modifier.padding(innerPaddingValues)
+                ) {
+                    navigator.currentDestination?.content?.let {
+                        AnimalDetails(
+                            animal = it,
+                            modifier = Modifier.verticalScroll(scrollState)
+                        )
+                    }
+                }
+            }
+        )
+    }
+}
+
+@Composable
+fun AnimalDetails(
+    animal: Animal,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .padding(10.dp),
+    ) {
+        AnimalAvatar(
+            url = animal.imagen,
+            contentDescription = animal.nombre,
+            species = animal.especie,
+            modifier = Modifier
+                .height(300.dp)
+                .clip(RoundedCornerShape(8.dp))
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = animal.nombre,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 28.sp
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                AnimalGender(gender = animal.genero)
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = if (animal.adoptado) "Adoptado" else "No adoptado",
+                    color = MaterialTheme.colorScheme.primary,
+                    fontSize = 18.sp
+                )
+                Spacer(modifier = Modifier.weight(1f))
+                Text(
+                    text = "${animal.edad} Años",
+                    color = Color.Gray,
+                    fontSize = 18.sp
+                )
+            }
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column {
+                    Text(
+                        text = "${animal.peso} KG",
+                        color = Color.Gray,
+                        fontSize = 18.sp
+                    )
+                    if (animal.codigo != null) {
+                        Text(
+                            text = animal.codigo,
+                            color = Color.Gray,
+                            fontSize = 18.sp
+                        )
+                    }
+                }
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = "ubicacion"
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = animal.ubicacion,
+                    fontSize = 18.sp
+                )
+            }
+            Spacer(modifier = Modifier.height(16.dp))
+            Text(
+                text = animal.historia ?: "",
             )
         }
+    }
+}
+
+@Composable
+fun AnimalListPane(
+    animals: List<Animal>,
+    endReached: Boolean,
+    isLoadingItems: Boolean,
+    searchText: String,
+    onSearchChanged: (String) -> Unit,
+    onLoadNextItems: () -> Unit,
+    onAnimalClicked: (Animal) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(
+        modifier = modifier
+            .padding(
+                horizontal = 24.dp,
+                vertical = 16.dp
+            )
+    ) {
+        Text(
+            text = "Animalitos",
+            fontSize = 24.sp,
+        )
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+        OutlinedTextField(
+            value = searchText,
+            onValueChange = onSearchChanged,
+            modifier = Modifier.fillMaxWidth(),
+            placeholder = { Text("Busca un animalito") },
+            shape = RoundedCornerShape(8.dp),
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.Search,
+                    contentDescription = "search"
+                )
+            }
+        )
+        Spacer(
+            modifier = Modifier.height(24.dp)
+        )
+        AnimalList(
+            animals,
+            endReached,
+            isLoadingItems,
+            onLoadNextItems,
+            onAnimalClicked,
+        )
     }
 }
 
@@ -120,6 +267,7 @@ fun AnimalList(
     endReached: Boolean,
     isLoading: Boolean,
     onLoadNextItems: () -> Unit,
+    onAnimalClicked: (Animal) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberLazyListState()
@@ -152,8 +300,12 @@ fun AnimalList(
         }
 
         items(animals.size) {
-            AnimalCard(animals[it])
+            AnimalCard(
+                animals[it],
+                onAnimalClicked,
+            )
         }
+
         item {
             if (isLoading) {
                 Row(
@@ -172,29 +324,21 @@ fun AnimalList(
 @Composable
 fun AnimalCard(
     animal: Animal,
+    onAnimalClicked: (Animal) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val genderIcon = if (animal.genero == "Male") R.drawable.male else R.drawable.female
-    val genderIconBg = if (animal.genero == "Male") Color(0xffdae3f3) else Color(0xfff0dbe4)
-    val defaultAvatar =
-        if (animal.especie == "Cat") R.drawable.default_cat else R.drawable.default_dog
-
     ElevatedCard(
+        onClick = { onAnimalClicked(animal) },
         modifier = modifier
             .fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.fillMaxWidth()
         ) {
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(animal.imagen)
-                    .crossfade(true)
-                    .build(),
-                fallback = painterResource(defaultAvatar),
+            AnimalAvatar(
+                url = animal.imagen,
                 contentDescription = animal.nombre,
-                contentScale = ContentScale.FillWidth,
-                modifier = Modifier.height(200.dp),
+                species = animal.especie
             )
 
             Column(
@@ -212,23 +356,7 @@ fun AnimalCard(
                         fontWeight = FontWeight.Medium,
                     )
                     Spacer(modifier = Modifier.weight(1f))
-                    Box(
-                        modifier = Modifier
-                            .height(36.dp)
-                            .aspectRatio(1f)
-                            .background(
-                                color = genderIconBg,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Image(
-                            painter = painterResource(genderIcon),
-                            contentDescription = "gender",
-                            contentScale = ContentScale.Inside,
-                            modifier = Modifier.height(24.dp)
-                        )
-                    }
+                    AnimalGender(gender = animal.genero)
                 }
 
                 Spacer(modifier = Modifier.height(10.dp))

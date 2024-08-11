@@ -4,6 +4,7 @@ plugins {
     id("kotlin-kapt")
     id("com.google.dagger.hilt.android")
     kotlin("plugin.serialization") version "2.0.0"
+    id("kotlin-parcelize")
 }
 
 android {
@@ -87,6 +88,10 @@ dependencies {
 
     implementation("io.coil-kt:coil:2.7.0")
     implementation("io.coil-kt:coil-compose:2.7.0")
+
+    implementation("androidx.compose.material3.adaptive:adaptive:1.0.0-alpha12")
+    implementation("androidx.compose.material3.adaptive:adaptive-layout:1.0.0-alpha12")
+    implementation("androidx.compose.material3.adaptive:adaptive-navigation:1.0.0-alpha12")
 }
 
 kapt {
