@@ -16,9 +16,9 @@ class AnimalRepositoryImpl(
         const val TAG = "AnimalRepositoryImpl"
     }
 
-    override suspend fun getAnimals(page: Int): List<Animal> {
+    override suspend fun getAnimals(page: Int, name: String?): List<Animal> {
         return try {
-            val response = api.getAnimals(page)
+            val response = api.getAnimals(page, name)
             response.data
                 .map(AnimalDto::toDomain)
                 .map {

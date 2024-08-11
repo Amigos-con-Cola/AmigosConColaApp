@@ -22,5 +22,8 @@ interface AmigosConColaApi {
     suspend fun refresh(@Body refreshToken: RefreshTokenDto): TokensDto
 
     @GET("api/animals")
-    suspend fun getAnimals(@Query("page") page: Int): PaginatedDto<AnimalDto>
+    suspend fun getAnimals(
+        @Query("page") page: Int,
+        @Query("name") name: String? = null
+    ): PaginatedDto<AnimalDto>
 }

@@ -12,9 +12,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.VerticalDivider
@@ -50,6 +54,7 @@ fun HomeScreen(
 ) {
     val scope = rememberCoroutineScope()
     val state by homeViewModel.state.collectAsState()
+    val searchText by homeViewModel.searchText.collectAsState()
 
     val onMenuClicked: () -> Unit = {
         scope.launch {
@@ -72,6 +77,21 @@ fun HomeScreen(
             Text(
                 text = "Animalitos",
                 fontSize = 24.sp,
+            )
+            Spacer(
+                modifier = Modifier.height(24.dp)
+            )
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { homeViewModel.onEvent(HomeUiEvent.SearchTextChanged(it)) },
+                modifier = Modifier.fillMaxWidth(),
+                placeholder = { Text("Busca un animalito") },
+                trailingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "search"
+                    )
+                }
             )
             Spacer(
                 modifier = Modifier.height(24.dp)
@@ -115,6 +135,14 @@ fun AnimalList(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        if (animals.isEmpty()) {
+            item {
+                Text(
+                    text = "No se encontraron animalitos"
+                )
+            }
+        }
+
         items(animals.size) {
             AnimalCard(animals[it])
         }
