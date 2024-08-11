@@ -1,10 +1,13 @@
 package io.github.amigosconcola.ui.screens
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -12,12 +15,15 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -34,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -86,7 +93,8 @@ fun HomeScreen(
                 onValueChange = { homeViewModel.onEvent(HomeUiEvent.SearchTextChanged(it)) },
                 modifier = Modifier.fillMaxWidth(),
                 placeholder = { Text("Busca un animalito") },
-                trailingIcon = {
+                shape = RoundedCornerShape(8.dp),
+                leadingIcon = {
                     Icon(
                         imageVector = Icons.Default.Search,
                         contentDescription = "search"
@@ -135,7 +143,7 @@ fun AnimalList(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        if (animals.isEmpty()) {
+        if (animals.isEmpty() && !isLoading) {
             item {
                 Text(
                     text = "No se encontraron animalitos"
@@ -166,6 +174,11 @@ fun AnimalCard(
     animal: Animal,
     modifier: Modifier = Modifier
 ) {
+    val genderIcon = if (animal.genero == "Male") R.drawable.male else R.drawable.female
+    val genderIconBg = if (animal.genero == "Male") Color(0xffdae3f3) else Color(0xfff0dbe4)
+    val defaultAvatar =
+        if (animal.especie == "Cat") R.drawable.default_cat else R.drawable.default_dog
+
     ElevatedCard(
         modifier = modifier
             .fillMaxWidth(),
@@ -178,10 +191,7 @@ fun AnimalCard(
                     .data(animal.imagen)
                     .crossfade(true)
                     .build(),
-                fallback = if (animal.especie == "Cat")
-                    painterResource(id = R.drawable.default_cat)
-                else
-                    painterResource(id = R.drawable.default_dog),
+                fallback = painterResource(defaultAvatar),
                 contentDescription = animal.nombre,
                 contentScale = ContentScale.FillWidth,
                 modifier = Modifier.height(200.dp),
@@ -193,10 +203,35 @@ fun AnimalCard(
                     .background(Color(0xffeff1f2))
                     .padding(16.dp)
             ) {
-                Text(
-                    text = animal.nombre,
-                    fontSize = 24.sp
-                )
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = animal.nombre,
+                        fontSize = 24.sp,
+                        fontWeight = FontWeight.Medium,
+                    )
+                    Spacer(modifier = Modifier.weight(1f))
+                    Box(
+                        modifier = Modifier
+                            .height(36.dp)
+                            .aspectRatio(1f)
+                            .background(
+                                color = genderIconBg,
+                                shape = CircleShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Image(
+                            painter = painterResource(genderIcon),
+                            contentDescription = "gender",
+                            contentScale = ContentScale.Inside,
+                            modifier = Modifier.height(24.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
 
                 Row(
                     verticalAlignment = Alignment.CenterVertically
@@ -206,13 +241,14 @@ fun AnimalCard(
                     )
                     Spacer(modifier = modifier.width(8.dp))
                     VerticalDivider(
-                        color = Color.Black,
+                        color = Color.Gray,
                         thickness = 1.dp,
                         modifier = modifier.height(16.dp)
                     )
                     Spacer(modifier = modifier.width(8.dp))
                     Text(
-                        text = if (animal.adoptado) "Adoptado" else "No adoptado"
+                        text = if (animal.adoptado) "Adoptado" else "No adoptado",
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
