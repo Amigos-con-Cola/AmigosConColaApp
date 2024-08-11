@@ -68,7 +68,9 @@ fun NavigationHost(
         }
 
         composable(Screen.About) {
-            AboutScreen()
+            AboutScreen(
+                drawerState
+            )
         }
     }
 }

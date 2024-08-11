@@ -12,7 +12,7 @@ import retrofit2.http.Query
 
 interface AmigosConColaApi {
     companion object {
-        const val API_BASE = "http://192.168.1.19:5130/"
+        const val API_BASE = "https://amigosconcolaapi-production.up.railway.app"
     }
 
     @POST("api/auth/login")
